@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcription Viewer</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        h2 { color: #333; }
+        .container { max-width: 800px; margin: 20px auto; }
+        .transcription { border-bottom: 1px solid #ccc; padding: 10px; cursor: pointer; }
+        .segments { display: none; margin-left: 20px; font-size: 14px; }
+        .segment { padding: 5px; border-left: 3px solid #007BFF; margin: 5px 0; }
+        #upload-form { margin-bottom: 20px; }
+        #file-upload { margin-right: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Upload Audio File</h2>
+    <form id="upload-form">
+        <input type="file" id="file-upload" accept="audio/*">
+        <button type="submit">Upload</button>
+    </form>
+
+    <h2>Transcriptions</h2>
+    <div id="transcriptions"></div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        function loadTranscriptions() {
+            // Fetch all transcriptions
+            $.getJSON("/transcriptions", function(data) {
+                let transcriptionsDiv = $("#transcriptions");
+                transcriptionsDiv.empty();
+                data.forEach(function(transcription) {
+                    transcriptionsDiv.append(`
+                        <div class="transcription" data-id="${transcription.id}">
+                            <strong>${transcription.filename}</strong> <em>(${transcription.language})</em>
+                            <div class="segments" id="segments-${transcription.id}"></div>
+                        </div>
+                    `);
+                });
+
+                // Click event to fetch segments
+                $(".transcription").click(function() {
+                    let transcriptionId = $(this).attr("data-id");
+                    let segmentsDiv = $("#segments-" + transcriptionId);
+
+                    if (segmentsDiv.is(":visible")) {
+                        segmentsDiv.slideUp();
+                    } else {
+                        $.getJSON(`/transcriptions/${transcriptionId}/segments`, function(segments) {
+                            segmentsDiv.empty();
+                            segments.forEach(segment => {
+                                segmentsDiv.append(`
+                                    <div class="segment">
+                                        <strong>(${segment.start} - ${segment.end} sec):</strong> ${segment.text}
+                                        <br><small>Confidence: ${segment.confidence}</small>
+                                    </div>
+                                `);
+                            });
+                            segmentsDiv.slideDown();
+                        });
+                    }
+                });
+            });
+        }
+
+        // Handle file upload
+        $("#upload-form").submit(function(event) {
+            event.preventDefault();
+            let formData = new FormData();
+            let fileInput = $("#file-upload")[0].files[0];
+
+            if (!fileInput) {
+                alert("Please select a file!");
+                return;
+            }
+
+            formData.append("file", fileInput);
+
+            $.ajax({
+                url: "/upload/",
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    alert(response.message);
+                    loadTranscriptions(); // Reload the transcription list
+                }
+            });
+        });
+
+        // Initial load of transcriptions
+        loadTranscriptions();
+    });
+</script>
+
+</body>
+</html>

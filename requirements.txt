@@ -1,0 +1,10 @@
+ipykernel
+numpy<2
+pandas
+matplotlib
+scikit-learn
+whisper-timestamped
+hf_transfer
+fastapi
+uvicorn
+transformers
