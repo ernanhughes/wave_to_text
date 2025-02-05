@@ -8,3 +8,16 @@ hf_transfer
 fastapi
 uvicorn
 transformers
+
+# create movie
+opencv-python
+moviepy==1.0.3
+numpy<2
+imageio-ffmpeg==0.4.9
+imageio>=2.5.0
+decorator
+tqdm
+Pillow
+scipy
+pydub
+audiofile
